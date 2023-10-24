@@ -51,23 +51,13 @@ app.post('/api/shorturl', async (req, res) => {
   Url.find()
   .then((data) => {
     let dataLength = data.length;
-    return dataLength;
-  })
-  .then((fixedURL) => {
-    let newUrl = new Url({ originalUrl: originalURL, fixedUrl: fixedURL });
-    console.log(newUrl);
-    return newUrl;
-  })
-  .then((savedUrl) => {
-    let saved = savedUrl.save();
+    let newUrl = new Url({ originalUrl: originalURL, fixedUrl: dataLength });
+    let saved = newUrl.save();
     return saved;
   })
   .then((data) => {
-    let replaceReg1 = /^https:?:\/\//i;
-    let replaceReg2 = /^http:?:\/\//i;
-    let replace1 = originalURL.replace(replaceReg1, '');
-    let replace2 = replace1.replace(replaceReg2, '');
-    dns.lookup(replace2, (err) => {
+    let numUrl = Number(data.fixedUrl);
+    dns.lookup((new URL(originalURL).hostname), (err) => {
       if (err && err.code === 'ENOTFOUND') {
         res.json({
           'error': 'invalid url'
@@ -75,7 +65,7 @@ app.post('/api/shorturl', async (req, res) => {
       } else {
         res.json({
           original_url: originalURL,
-          short_url: data.fixedUrl
+          short_url: numUrl
         })
       }
     })
@@ -87,12 +77,11 @@ app.get('/api/shorturl/:num?', async (req, res) => {
   Url.findOne({fixedUrl: num })
   .then((docs)=>{
       let redirect = docs.originalUrl;
+      console.log(redirect);
       res.redirect(redirect);
-      console.log('success');
   })
   .catch((err)=>{
       res.send(err);
-      console.log('failure');
   });
 });
 
